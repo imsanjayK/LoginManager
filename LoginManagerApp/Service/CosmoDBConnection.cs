@@ -31,12 +31,12 @@ namespace LoginManagerApp.Service
             await client.CreateDatabaseIfNotExistsAsync(new Database { Id = db_id });
         }
 
-        public async Task CreateCollection(string collection_id)
+        public async Task CreateCollection(string db_id, string collection_id)
         {
             await client.CreateDocumentCollectionIfNotExistsAsync(
-                UriFactory.CreateDatabaseUri(dataBase), new DocumentCollection { Id = collection_id });
+                UriFactory.CreateDatabaseUri(db_id), new DocumentCollection { Id = collection_id });
         }
-        public async Task CreateDocumentIfNotExists(UserAccount profile,string collection_Id, TraceWriter log)
+        public async Task CreateDocumentIfNotExists(UserAccount profile,string db_id, string collection_Id, TraceWriter log)
         {
             try
             {
@@ -47,7 +47,7 @@ namespace LoginManagerApp.Service
             {
                 if (de.StatusCode == HttpStatusCode.NotFound)
                 {
-                    await client.CreateDocumentAsync(UriFactory.CreateDocumentCollectionUri(GetDataBase(), collection_Id), profile);
+                    await client.CreateDocumentAsync(UriFactory.CreateDocumentCollectionUri(db_id, collection_Id), profile);
                   log.Info($"Created login details {profile.log_Id}");
                 }
                 else

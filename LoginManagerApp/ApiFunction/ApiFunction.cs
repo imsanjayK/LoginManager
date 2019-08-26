@@ -10,6 +10,7 @@ using Microsoft.Azure.Documents.Client;
 using System.Text;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace LoginManagerApp.ApiFunction
 {
@@ -19,35 +20,61 @@ namespace LoginManagerApp.ApiFunction
         public static async Task<HttpResponseMessage> CreateDatabase([HttpTrigger(AuthorizationLevel.Function, "post", Route = "Database/{db_id}")]HttpRequestMessage req, TraceWriter log, string db_id)
         {
             log.Info("CreateDatabase method started");
-            CosmoDBConnection dBConnection = new CosmoDBConnection();
-            await dBConnection.CreateDatabase(db_id);
-            return req.CreateResponse(HttpStatusCode.OK, "Database created");
+            try
+            {
+                CosmoDBConnection dBConnection = new CosmoDBConnection();
+                await dBConnection.CreateDatabase(db_id);
+                var database = new JObject();
+                database.Add("Database", db_id);
+                return new HttpResponseMessage()
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(database))
+                };
+            }
+            catch (WebException wex)
+            {
+                return req.CreateResponse(HttpStatusCode.OK, "Database creation fail due to " + wex);
+            }
         }
 
         [FunctionName("CreateCollection")]
-        public static async Task<HttpResponseMessage> CreateCollection([HttpTrigger(AuthorizationLevel.Function, "post", Route = "Collection/{collection_id}")]HttpRequestMessage req, TraceWriter log,string collection_id)
+        public static async Task<HttpResponseMessage> CreateCollection([HttpTrigger(AuthorizationLevel.Function, "post", Route = "{db_id}/Collection/{collection_id}")]HttpRequestMessage req, TraceWriter log, string db_id, string collection_id)
         {
             log.Info("CreateCollection method started");
-            CosmoDBConnection dBConnection = new CosmoDBConnection();
-            await dBConnection.CreateCollection(collection_id);
-            return req.CreateResponse(HttpStatusCode.OK, "Collection created");
+            try
+            {
+                CosmoDBConnection dBConnection = new CosmoDBConnection();
+                await dBConnection.CreateCollection(db_id, collection_id);
+                var collection = new JObject();
+                collection.Add("Database", db_id);
+                collection.Add("Collection", collection_id);
+                return new HttpResponseMessage()
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(collection))
+                };
+
+            }
+            catch (WebException wex)
+            {
+                return req.CreateResponse(HttpStatusCode.OK, "Collection creation fail due to " + wex);
+            }
         }
 
         [FunctionName("CreateDocument")]
-        public static async Task<HttpResponseMessage> CreateDocument([HttpTrigger(AuthorizationLevel.Function,"post", Route = "User/{collection_id}")]HttpRequestMessage req, TraceWriter log, string collection_id)
+        public static async Task<HttpResponseMessage> CreateDocument([HttpTrigger(AuthorizationLevel.Function, "post", Route = "{db_id}/User/{collection_id}")]HttpRequestMessage req, TraceWriter log, string db_id, string collection_id)
         {
             log.Info("--------------------------------------------------------------");
             log.Info("CreateDocument method started");
             System.Console.WriteLine();
             var profile = JsonConvert.DeserializeObject<UserAccount>(req.Content.ReadAsStringAsync().Result);
-           
+
             CosmoDBConnection dBConnection = new CosmoDBConnection();
-            
-            await dBConnection.CreateDocumentIfNotExists(profile, collection_id, log);
+
+            await dBConnection.CreateDocumentIfNotExists(profile, db_id, collection_id, log);
 
             log.Info("CreateDocument method Ended");
             log.Info("--------------------------------------------------------------");
-           
+
             return req.CreateResponse(HttpStatusCode.OK, "Collection creted");
         }
 
