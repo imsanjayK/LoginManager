@@ -36,25 +36,46 @@ namespace LoginManagerApp.Service
             await client.CreateDocumentCollectionIfNotExistsAsync(
                 UriFactory.CreateDatabaseUri(db_id), new DocumentCollection { Id = collection_id });
         }
+
         public async Task CreateDocumentIfNotExists(UserAccount profile,string db_id, string collection_Id, TraceWriter log)
         {
-            try
+            //try
+            //{
+            //    await client.ReadDocumentAsync(UriFactory.CreateDocumentUri(db_id,collection_Id, profile.log_Id));
+            //    log.Error($"Login details with {profile.log_Id} exist, can't create document.");
+            //}
+            //catch (DocumentClientException de)
+            //{
+            //    if (de.StatusCode == HttpStatusCode.NotFound)
+            //    {
+
+            IQueryable<UserAccount> deviceQuery = client.CreateDocumentQuery<UserAccount>(UriFactory.CreateDocumentCollectionUri(db_id, collection_Id));
+
+            List<UserAccount> list = new List<UserAccount>();
+
+            foreach (var device in deviceQuery)
             {
-                await client.ReadDocumentAsync(UriFactory.CreateDocumentUri(GetDataBase(),collection_Id, profile.log_Id));
-                log.Error($"Login details with {profile.log_Id} exist, can't create document.");
-            }
-            catch (DocumentClientException de)
-            {
-                if (de.StatusCode == HttpStatusCode.NotFound)
+                if (profile.Equals(device))
                 {
+                    log.Error($"Login details with {profile.log_Id} exist, can't create document.");
+                    return;
+                }
+            }
+            
+
+            profile.log_Id = Guid.NewGuid().ToString();
                     await client.CreateDocumentAsync(UriFactory.CreateDocumentCollectionUri(db_id, collection_Id), profile);
                   log.Info($"Created login details {profile.log_Id}");
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            //    }
+            //    else
+            //    {
+            //        throw;
+            //    }
+            //}
+            //catch (Exception de)
+            //{
+               
+            //}
         }
 
         public DocumentClient GetClient()

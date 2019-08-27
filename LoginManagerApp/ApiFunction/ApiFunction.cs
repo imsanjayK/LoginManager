@@ -78,8 +78,8 @@ namespace LoginManagerApp.ApiFunction
             return req.CreateResponse(HttpStatusCode.OK, "Collection creted");
         }
 
-        [FunctionName("Document")]
-        public static async Task<HttpResponseMessage> Document([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "Document/read")]HttpRequestMessage req, TraceWriter log)
+        [FunctionName("GetUserDocument")]
+        public static async Task<HttpResponseMessage> GetUserDocument([HttpTrigger(AuthorizationLevel.Function, "get", Route = "{db_id}/User/{collection_id}")]HttpRequestMessage req, TraceWriter log, string db_id, string collection_id)
         {
             log.Info("C# HTTP trigger function processed a request.");
 
@@ -100,7 +100,7 @@ namespace LoginManagerApp.ApiFunction
 
             CosmoDBConnection dBConnection = new CosmoDBConnection();
             DocumentClient client = dBConnection.GetClient();
-            IQueryable<UserAccount> deviceQuery = client.CreateDocumentQuery<UserAccount>(UriFactory.CreateDocumentCollectionUri(dBConnection.GetDataBase(), dBConnection.GetCollection()));
+            IQueryable<UserAccount> deviceQuery = client.CreateDocumentQuery<UserAccount>(UriFactory.CreateDocumentCollectionUri(db_id, collection_id));
 
             List<UserAccount> list = new List<UserAccount>();
 
@@ -108,7 +108,6 @@ namespace LoginManagerApp.ApiFunction
             {
                 list.Add(device);
             }
-
 
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
