@@ -84,42 +84,44 @@ namespace LoginManagerApp.ApiFunction
         }
 
         [FunctionName("GetUserDocument")]
-        public static  Task<HttpResponseMessage> GetUserDocument([HttpTrigger(AuthorizationLevel.Function, "get", Route = "{db_id}/User/{collection_id}")]HttpRequestMessage req, TraceWriter log, string db_id, string collection_id)
+        public static async Task<HttpResponseMessage> GetUserDocument([HttpTrigger(AuthorizationLevel.Function, "get", Route = "{db_id}/User/{collection_id}")]HttpRequestMessage req, TraceWriter log, string db_id, string collection_id)
         {
-            log.Info("C# HTTP trigger function processed a request.");
-
-            // parse query parameter
-            //string name = req.GetQueryNameValuePairs()
-            //    .FirstOrDefault(q => string.Compare(q.Key, "name", true) == 0)
-            //    .Value;
-
-            //if (name == null)
-            //{
-            //    // Get request body
-            //    dynamic data = await req.Content.ReadAsAsync<object>();
-            //    name = data?.name;
-            //}
-            //return name == null
-            //    ? req.CreateResponse(HttpStatusCode.BadRequest, "Please pass a name on the query string or in the request body")
-            //    : req.CreateResponse(HttpStatusCode.OK, "Hello " + name);
-
+            log.Info("--------------------------------------------------------------");
+            log.Info("GetUserDocument method started");
             CosmoDBConnection dBConnection = new CosmoDBConnection();
-            DocumentClient client = dBConnection.GetClient();
+            DocumentClient client =  dBConnection.GetClient();
             IQueryable<UserAccount> deviceQuery =  client.CreateDocumentQuery<UserAccount>(UriFactory.CreateDocumentCollectionUri(db_id, collection_id));
 
             List<UserAccount> list = new List<UserAccount>();
-
             foreach (var device in deviceQuery)
             {
                 list.Add(device);
             }
-
-            return new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(JsonConvert.SerializeObject(list), Encoding.UTF8, "application/json")
-            };
+            log.Info("GetUserDocument method Ended");
+            log.Info("--------------------------------------------------------------");
+            return Response(list);
         }
 
+        [FunctionName("GetDocumentBySite")]
+        public static async Task<HttpResponseMessage> GetDocumentBySite([HttpTrigger(AuthorizationLevel.Function, "get", Route = "{db_id}/User/{collection_id}/website/")]HttpRequestMessage req, TraceWriter log, string db_id, string collection_id)
+        {
+            log.Info("--------------------------------------------------------------");
+            log.Info("GetUserDocument method started");
+            string query = Query(req, "website");
+            CosmoDBConnection dBConnection = new CosmoDBConnection();
+            DocumentClient client = dBConnection.GetClient();
+            IQueryable<UserAccount> deviceQuery =  client.CreateDocumentQuery<UserAccount>(UriFactory.CreateDocumentCollectionUri(db_id, collection_id))
+                .Where(s => s.website.Contains(query));
+
+            List<UserAccount> list = new List<UserAccount>();
+            foreach (var device in deviceQuery)
+            {
+                list.Add(device);
+            }
+            log.Info("GetUserDocument method Ended");
+            log.Info("--------------------------------------------------------------");
+            return Response(list);
+        }
         //[FunctionName("fun")]
         //public static async Task<HttpResponseMessage> fun([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequestMessage req, TraceWriter log)
         //{
@@ -143,12 +145,15 @@ namespace LoginManagerApp.ApiFunction
 
         //}
 
-        private static HttpResponseMessage Response(JObject response) => new HttpResponseMessage()
+        #region Private Methods
+        private static  HttpResponseMessage Response(Object response) =>  new HttpResponseMessage()
         {
-            Content = new StringContent(JsonConvert.SerializeObject(response))
+            Content = new StringContent(JsonConvert.SerializeObject(response), Encoding.UTF8, "application/json")
         };
 
-
-
+        // parse query parameter
+        private static string Query(HttpRequestMessage req, string key) => req.GetQueryNameValuePairs()
+                .FirstOrDefault(q => string.Compare(q.Key, key, true) == 0).Value;
+        #endregion Private Methods
     }
 }
