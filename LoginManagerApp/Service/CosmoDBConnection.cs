@@ -15,7 +15,7 @@ namespace LoginManagerApp.Service
     {
         private  string endpointUrl = ConfigurationManager.AppSettings["EndpointUrl"];
         private  string primaryKey = ConfigurationManager.AppSettings["PrimaryKey"];
-        private string dataBase = ConfigurationManager.AppSettings["DataBase"];
+        //private string dataBase = ConfigurationManager.AppSettings["DataBase"];
         //private string collection = ConfigurationManager.AppSettings["Collection"];
         public string collection { get; set; }
 
@@ -37,7 +37,7 @@ namespace LoginManagerApp.Service
                 UriFactory.CreateDatabaseUri(db_id), new DocumentCollection { Id = collection_id });
         }
 
-        public async Task CreateDocumentIfNotExists(UserAccount profile,string db_id, string collection_Id, TraceWriter log)
+        public async Task<string> CreateDocumentIfNotExists(UserAccount profile,string db_id, string collection_Id, TraceWriter log)
         {
             //try
             //{
@@ -57,15 +57,15 @@ namespace LoginManagerApp.Service
             {
                 if (profile.Equals(device))
                 {
-                    log.Error($"Login details with {profile.log_Id} exist, can't create document.");
-                    return;
+                    log.Error($"Login details with {device.log_Id} exist, can't create document.");
+                    return $"Login details with {device.log_Id} exist, can't create document."; 
                 }
             }
-            
 
             profile.log_Id = Guid.NewGuid().ToString();
                     await client.CreateDocumentAsync(UriFactory.CreateDocumentCollectionUri(db_id, collection_Id), profile);
                   log.Info($"Created login details {profile.log_Id}");
+            return profile.log_Id;
             //    }
             //    else
             //    {
@@ -74,7 +74,7 @@ namespace LoginManagerApp.Service
             //}
             //catch (Exception de)
             //{
-               
+
             //}
         }
 
@@ -83,14 +83,14 @@ namespace LoginManagerApp.Service
             return client;
         }
 
-        public string GetDataBase()
-        {
-            return dataBase;
-        }
+        //public string GetDataBase()
+        //{
+        //    return dataBase;
+        //}
 
-        public string GetCollection()
-        {
-            return collection;
-        }
+        //public string GetCollection()
+        //{
+        //    return collection;
+        //}
     }
 }

@@ -11,6 +11,7 @@ using System.Text;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 
 namespace LoginManagerApp.ApiFunction
 {
@@ -26,10 +27,7 @@ namespace LoginManagerApp.ApiFunction
                 await dBConnection.CreateDatabase(db_id);
                 var database = new JObject();
                 database.Add("Database", db_id);
-                return new HttpResponseMessage()
-                {
-                    Content = new StringContent(JsonConvert.SerializeObject(database))
-                };
+                return Response(database);
             }
             catch (WebException wex)
             {
@@ -48,10 +46,7 @@ namespace LoginManagerApp.ApiFunction
                 var collection = new JObject();
                 collection.Add("Database", db_id);
                 collection.Add("Collection", collection_id);
-                return new HttpResponseMessage()
-                {
-                    Content = new StringContent(JsonConvert.SerializeObject(collection))
-                };
+                return Response(collection);
 
             }
             catch (WebException wex)
@@ -70,16 +65,26 @@ namespace LoginManagerApp.ApiFunction
 
             CosmoDBConnection dBConnection = new CosmoDBConnection();
 
-            await dBConnection.CreateDocumentIfNotExists(profile, db_id, collection_id, log);
+            var UserId = await dBConnection.CreateDocumentIfNotExists(profile, db_id, collection_id, log);
 
             log.Info("CreateDocument method Ended");
             log.Info("--------------------------------------------------------------");
-
-            return req.CreateResponse(HttpStatusCode.OK, "Collection creted");
+            if (Guid.TryParse(UserId, out Guid userId))
+            {
+                var collection = new JObject();
+                collection.Add("Database", db_id);
+                collection.Add("User", collection_id);
+                collection.Add("Document id", userId);
+                return Response(collection);
+            }
+            var response = new JObject();
+            response.Add("StatusCode", 409);
+            response.Add("Error", "Document Exist");
+            return Response(response);
         }
 
         [FunctionName("GetUserDocument")]
-        public static async Task<HttpResponseMessage> GetUserDocument([HttpTrigger(AuthorizationLevel.Function, "get", Route = "{db_id}/User/{collection_id}")]HttpRequestMessage req, TraceWriter log, string db_id, string collection_id)
+        public static  Task<HttpResponseMessage> GetUserDocument([HttpTrigger(AuthorizationLevel.Function, "get", Route = "{db_id}/User/{collection_id}")]HttpRequestMessage req, TraceWriter log, string db_id, string collection_id)
         {
             log.Info("C# HTTP trigger function processed a request.");
 
@@ -100,7 +105,7 @@ namespace LoginManagerApp.ApiFunction
 
             CosmoDBConnection dBConnection = new CosmoDBConnection();
             DocumentClient client = dBConnection.GetClient();
-            IQueryable<UserAccount> deviceQuery = client.CreateDocumentQuery<UserAccount>(UriFactory.CreateDocumentCollectionUri(db_id, collection_id));
+            IQueryable<UserAccount> deviceQuery =  client.CreateDocumentQuery<UserAccount>(UriFactory.CreateDocumentCollectionUri(db_id, collection_id));
 
             List<UserAccount> list = new List<UserAccount>();
 
@@ -137,5 +142,13 @@ namespace LoginManagerApp.ApiFunction
 
 
         //}
+
+        private static HttpResponseMessage Response(JObject response) => new HttpResponseMessage()
+        {
+            Content = new StringContent(JsonConvert.SerializeObject(response))
+        };
+
+
+
     }
 }
