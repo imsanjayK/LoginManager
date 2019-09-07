@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace LoginManagerApp.Service
 {
@@ -33,6 +34,15 @@ namespace LoginManagerApp.Service
                    userName == account.userName &&
                    password == account.password &&
                    website == account.website;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 1889006667;
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(userName);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(password);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(website);
+            return hashCode;
         }
     }
 }
