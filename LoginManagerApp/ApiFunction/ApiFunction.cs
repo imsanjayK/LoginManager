@@ -1,16 +1,16 @@
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.WebJobs.Host;
+using System.Collections.Generic;
 using LoginManagerApp.Service;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Azure.Documents.Client;
-using System.Text;
-using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.Net.Http;
+using System.Text;
+using System.Linq;
+using System.Net;
 using System;
 
 namespace LoginManagerApp.ApiFunction
